@@ -2,23 +2,51 @@ pipeline {
 
 	agent any
 
+	environment {
+		MAVEN_OPTS = "-Dmaven.repo.local=${env.WORKSPACE}/.m2"
+	}
+
 	stages {
 
-		stage("Checkout") {
+		stage('Checkout') {
 			steps {
-				echo "Workspace : ${env.WORKSPACE}"
 				checkout scm
+			}
+		}
+
+		stage('Build') {
+			steps {
+				sh 'mvn clean compile'
+			}
+			post {
+				success {
+					echo "Compilation réussie"
+				}
+				failure {
+					echo "Erreur lors de la compilation"
+				}
+			}
+		}
+
+		stage('Tests') {
+			steps  {
+				sh 'mvn test'
+			}
+			post {
+				success {
+					echo "Tests réussis"
+				}
+				failure {
+					echo "Tests  échoués"
+				}
 			}
 		}
 
 	}
 
 	post {
-		success {
-			echo "Checkout réussi"
-		}
-		failure {
-			echo "Erreur lors du checkout"
+		always {
+			echo "Fin de la phase CI"
 		}
 	}
 
