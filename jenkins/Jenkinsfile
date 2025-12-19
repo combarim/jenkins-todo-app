@@ -1,0 +1,25 @@
+pipeline {
+
+	agent any
+
+	stages {
+
+		stage("Checkout") {
+			steps {
+				echo "Workspace : ${env.WORKSPACE}"
+				checkout scm
+			}
+		}
+
+	}
+
+	post {
+		success {
+			echo "Checkout réussi"
+		}
+		failure {
+			echo "Erreur lors du checkout"
+		}
+	}
+
+}
