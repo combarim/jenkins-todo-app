@@ -17,8 +17,8 @@ pipeline {
 		stage('Build') {
 			steps {
 				dir('backend') {
-					sh 'chmod +x ./mvnm'
-					sh './mvnm clean compile'
+					sh 'chmod +x ./mvnw'
+					sh './mvnw clean compile'
 				}
 			}
 			post {
@@ -34,7 +34,7 @@ pipeline {
 		stage('Tests') {
 			steps  {
 				dir('backend') {
-					sh './mvnm test'
+					sh './mvnw test'
 				}
 			}
 			post {
