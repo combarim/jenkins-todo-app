@@ -1,48 +1,72 @@
 pipeline {
 
-	agent any
-
+	agent none
+	
 	environment {
 		MAVEN_OPTS = "-Dmaven.repo.local=${env.WORKSPACE}/.m2"
+		DOCKER_IMAGE = "combarim/todo-app"
+		DOCKER_HOST = 'tcp://host.docker.internal:2375'
+
 	}
 
 	stages {
 
 		stage('Checkout') {
+			agent any
 			steps {
-				checkout scm
+				sh '''
+				if [ -d jenkins-todo-app ]; then
+					cd jenkins-todo-app && git pull
+				else 
+					git clone https://github.com/combarim/jenkins-todo-app.git
+				fi
+				'''
 			}
 		}
 
-		stage('Build') {
+		stage('Build & Test') {
+			agent any
 			steps {
 				dir('backend') {
 					sh 'chmod +x ./mvnw'
-					sh './mvnw clean compile'
+					sh './mvnw clean package'
 				}
 			}
 			post {
 				success {
-					echo "Compilation réussie"
+					echo "Build et tests réussis"
 				}
 				failure {
-					echo "Erreur lors de la compilation"
+					echo "Erreur lors du build ou des tests"
 				}
 			}
 		}
 
-		stage('Tests') {
+		stage('Docker build & Push') {
+			agent any
 			steps  {
 				dir('backend') {
-					sh './mvnw test'
+					script {
+						def commitHash = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+						def tag = "${DOCKER_IMAGE}:${commitHash}"
+						def latestTag = "${DOCKER_IMAGE}:latest"
+						sh "docker build -t ${tag} ."
+						sh "docker tag ${tag} ${latestTag}"
+
+						withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASSWORD')]){
+							sh 'echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USER --password-stdin'
+							sh "docker push $tag"
+							sh "docker push $latestTag"
+						}
+					}
 				}
 			}
 			post {
 				success {
-					echo "Tests réussis"
+					echo "Docker image construite avec succès"
 				}
 				failure {
-					echo "Tests  échoués"
+					echo "Erreur lors de la construction de l'image Docker"
 				}
 			}
 		}
@@ -51,7 +75,7 @@ pipeline {
 
 	post {
 		always {
-			echo "Fin de la phase CI"
+			echo "Pipeline CI/CD terminé"
 		}
 	}
 
