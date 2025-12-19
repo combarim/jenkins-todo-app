@@ -13,15 +13,7 @@ pipeline {
 
 		stage('Checkout') {
 			agent any
-			steps {
-				sh '''
-				if [ -d jenkins-todo-app ]; then
-					cd jenkins-todo-app && git pull
-				else 
-					git clone https://github.com/combarim/jenkins-todo-app.git
-				fi
-				'''
-			}
+			checkout scm
 		}
 
 		stage('Build & Test') {
