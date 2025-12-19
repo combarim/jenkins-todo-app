@@ -16,7 +16,8 @@ pipeline {
 
 		stage('Build') {
 			steps {
-				sh 'mvn clean compile'
+				sh 'chmod +x mvnm'
+				sh './mvnm clean compile'
 			}
 			post {
 				success {
@@ -30,7 +31,7 @@ pipeline {
 
 		stage('Tests') {
 			steps  {
-				sh 'mvn test'
+				sh './mvnm test'
 			}
 			post {
 				success {
